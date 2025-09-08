@@ -55,7 +55,7 @@ function createDisplayName(mood, shortId) {
 // Structures de données
 var users = []; // Garde la compatibilité avec l'ancien système
 var userDetails = new Map(); // Nouveau: stockage des détails utilisateurs
-// Structure: socketId -> { pseudo, mood, shortId, displayName, joinedAt, profile }
+// Structure: socketId -> { pseudo, mood, shortId, displayName, joinedAt, profile, surnoms }
 
 // Fonction pour broadcaster la liste des utilisateurs avec noms d'affichage
 function broadcastUserList() {
@@ -108,7 +108,8 @@ io.on('connection', function(socket) {
       shortId: shortId,
       displayName: displayName,
       joinedAt: new Date(),
-      profile: []
+      profile: [],
+      surnoms: []
     });
     
     // On stock le pseudo sur la session du serveur
@@ -147,6 +148,14 @@ io.on('connection', function(socket) {
     const user = userDetails.find((user) => user.shortId === userId);
 
     user.profile.push(message);
+
+    broadcastUserList();
+  })
+
+  socket.on('tame', function (userId, name) {
+    const user = userDetails.find((user) => user.shortId === userId);
+
+    user.surnoms.push(name);
 
     broadcastUserList();
   })
@@ -216,7 +225,8 @@ app.get('/api/debug/users', (req, res) => {
       mood: details.mood,
       shortId: details.shortId,
       joinedAt: details.joinedAt,
-      profile: details.profile
+      profile: details.profile,
+      surnoms: []
     });
   }
   res.json({
