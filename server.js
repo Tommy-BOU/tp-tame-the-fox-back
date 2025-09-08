@@ -55,7 +55,7 @@ function createDisplayName(mood, shortId) {
 // Structures de données
 var users = []; // Garde la compatibilité avec l'ancien système
 var userDetails = new Map(); // Nouveau: stockage des détails utilisateurs
-// Structure: socketId -> { pseudo, mood, shortId, displayName, joinedAt }
+// Structure: socketId -> { pseudo, mood, shortId, displayName, joinedAt, profile }
 
 // Fonction pour broadcaster la liste des utilisateurs avec noms d'affichage
 function broadcastUserList() {
@@ -63,32 +63,28 @@ function broadcastUserList() {
     // Trouver les détails de l'utilisateur
     for (let [socketId, details] of userDetails.entries()) {
       if (details.pseudo === pseudo) {
-        return details.displayName;
+        return details;
       }
     }
     return pseudo; // Fallback pour les anciens utilisateurs
   });
-  
-  console.log('📡 Broadcasting user list:', displayUsers);
+
   io.emit('allUsers', displayUsers);
 }
 
 // Quelqu'un rejoint le socket
 io.on('connection', function(socket) {
-  console.log('🔗 User is connected:', socket.id);
   
   // On lui envoie les utilisateurs présents sur le chat
   broadcastUserList();
   
   // Il demande à rejoindre le chat avec un pseudo (ou une humeur)
   socket.on('newUser', function(pseudo) {
-    console.log('👤 Nouvelle demande de connexion:', pseudo);
     
     // Générer un identifiant unique pour éviter les doublons
     let finalPseudo = pseudo;
     if (users.includes(pseudo)) {
       finalPseudo = pseudo + Math.floor(Math.random() * 100) + 1;
-      console.log('⚠️ Pseudo en double, nouveau pseudo:', finalPseudo);
     }
     
     // Détecter si c'est une connexion par humeur
@@ -100,11 +96,9 @@ io.on('connection', function(socket) {
       // Connexion par humeur
       shortId = generateShortId();
       displayName = createDisplayName(mood, shortId);
-      console.log(`🎭 Nouvelle connexion par humeur: ${mood} -> ${displayName}`);
     } else {
       // Connexion classique par pseudo
       displayName = finalPseudo;
-      console.log(`👤 Nouvelle connexion classique: ${finalPseudo}`);
     }
     
     // Stocker les détails de l'utilisateur
@@ -113,7 +107,8 @@ io.on('connection', function(socket) {
       mood: mood,
       shortId: shortId,
       displayName: displayName,
-      joinedAt: new Date()
+      joinedAt: new Date(),
+      profile: []
     });
     
     // On stock le pseudo sur la session du serveur
@@ -121,8 +116,6 @@ io.on('connection', function(socket) {
     
     // On ajoute l'utilisateur à la liste des utilisateurs présents
     users.push(finalPseudo);
-    
-    console.log(`✅ Utilisateur ajouté: ${displayName} (${users.length} connectés)`);
     
     io.emit('resUser', true);
     
@@ -142,8 +135,6 @@ io.on('connection', function(socket) {
     const userDetail = userDetails.get(socket.id);
     const displayName = userDetail ? userDetail.displayName : socket.pseudo;
     
-    console.log(`💬 Message de ${displayName}: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
-    
     // On envoie le message aux autres utilisateurs avec le nom d'affichage
     io.emit('message', {
       pseudo: displayName, // Utiliser le nom d'affichage
@@ -151,10 +142,17 @@ io.on('connection', function(socket) {
       status: 0
     });
   });
+
+  socket.on('profileUpdate', function (userId, message) {
+    const user = userDetails.find((user) => user.shortId === userId);
+
+    user.profile.push(message);
+
+    broadcastUserList();
+  })
   
   // Il se deconnecte mais reste sur la page (socket toujours présent)
   socket.on('logout', function() {
-    console.log('👋 Logout demandé pour:', socket.pseudo);
     
     // Récupérer les détails avant suppression
     const userDetail = userDetails.get(socket.id);
@@ -164,7 +162,6 @@ io.on('connection', function(socket) {
     const userIndex = users.indexOf(socket.pseudo);
     if (userIndex > -1) {
       users.splice(userIndex, 1);
-      console.log(`🗑️ Utilisateur retiré: ${displayName} (${users.length} restants)`);
     }
     
     // Supprimer les détails
@@ -182,7 +179,6 @@ io.on('connection', function(socket) {
   
   // Il quitte le navigateur
   socket.on('disconnect', function() {
-    console.log('❌ User is disconnected:', socket.id);
     
     // On vérifie s'il a oublié de se deconnecter
     if (users.includes(socket.pseudo)) {
@@ -219,7 +215,8 @@ app.get('/api/debug/users', (req, res) => {
       displayName: details.displayName,
       mood: details.mood,
       shortId: details.shortId,
-      joinedAt: details.joinedAt
+      joinedAt: details.joinedAt,
+      profile: details.profile
     });
   }
   res.json({
@@ -276,7 +273,6 @@ http.listen(port, function() {
 // Affichage périodique des statistiques (toutes les 5 minutes)
 setInterval(() => {
   const stats = getMoodStats();
-  console.log(`📊 Stats: ${users.length} connectés | ☀️ ${stats.sun} | ☁️ ${stats.cloud} | ❓ ${stats.question} | 👤 ${stats.classic}`);
 }, 5 * 60 * 1000);
 
 // Gestion propre de l'arrêt du serveur
