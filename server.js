@@ -25,8 +25,6 @@ var io = require('socket.io')(http,{
 	}
 });
 
-// Deprecated and no longer needed in newer version
-// io.set('origins', '*:*');
 var users = [];
 
 // Quelqu'un rejoint le socket
@@ -35,42 +33,50 @@ io.on('connection', function(socket){
     // On lui envoie les utilisateurs présents sur le chat
     io.emit('allUsers', users);
     // Il demande à rejoindre le chat avec un pseudo
-    socket.on('newUser', function (pseudo){
-      if (users.includes(pseudo)){
-        pseudo = pseudo + Math.floor(Math.random() * 100) + 1;
-      }
-      // On stock le pseudo sur la session du serveur
-      socket.pseudo = pseudo;
-      // On ajoute l'utilisateur à la liste des utilisateurs présents
-      users.push(pseudo);
+    socket.on('newUser', function (humeur){
+      // On stock l'humeur du nouvel user sur la session du serveur
+      socket.humeur = humeur;
+      // On ajoute l'utilisateur à la liste des utilisateurs présents, lui donné un uuid, son humeur et un profil vide
+      socket.id = require('uuid').v4();
+      socket.user = {id: id, humeur: humeur, profile: []};
+      users.push(socket.user);
       io.emit('resUser', true);
-      // On envoie un message aux autres utilisateurs avec son pseudo
-      io.emit('newUser', {pseudo: pseudo, message: '', status: 1});
+      // On envoie un message aux autres utilisateurs avec son profil
+      io.emit('newUser', {user: socket.user, message: '', status: 1});
       // On met à jour la liste des utilisateurs présents pour tous le monde
       io.emit('allUsers', users);
     })
     // Il envoie un message
     socket.on('message', function (message) {
       // On envoie le message aux autres utilisateurs avec son pseudo récupéré dans la session du serveur
-      io.emit('message', {pseudo: socket.pseudo, message: message, status: 0});
+      io.emit('message', {user: socket.user, message: message, status: 0});
     });
+
+    // Un utilisateur écrit sur le profil d'un autre
+    socket.on('updateProfile', function (userId, message) {
+      const user = users.find((user) => user.id === userId);
+      user.profile.push(message);
+
+      // On met à jour la liste des utilisateurs présents pour tous le monde
+      io.emit('allUsers', users);
+    })
     // Il se deconnecte mais reste sur la page (socket toujours présent)
     socket.on('logout', function () {
       // On le supprime de la liste des utilisateurs
-      users.splice(users.indexOf(socket.pseudo), 1);
-	  // Si le message est vide, on en met un par défaut
+      users.splice(users.indexOf(socket.user), 1);
+
       // On envoie un message aux autres utilisateurs pour prévenir la déconnexion
-      io.emit('logout', {pseudo: socket.pseudo, status: 2});
-      // On mmet à jour la liste des utilisateurs présents pour tout le monde
+      io.emit('logout', {user: socket.user, status: 2});
+      // On met à jour la liste des utilisateurs présents pour tout le monde
       io.emit('allUsers', users);
     }); 
     // Il quitte le navigateur
     socket.on('disconnect', function(){
       console.log('User is disconnected');
       // On vérifie s'il a oublié de se deconnecter
-      if (users.includes(socket.pseudo)){
-        users.splice(users.indexOf(socket.pseudo), 1);
-        io.emit('logout', {pseudo: socket.pseudo, status: 2});
+      if (users.includes(socket.user)){
+        users.splice(users.indexOf(socket.user), 1);
+        io.emit('logout', {user: socket.user, status: 2});
         io.emit('allUsers', users);
       }
     });
