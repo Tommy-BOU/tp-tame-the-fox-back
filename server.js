@@ -145,8 +145,10 @@ io.on('connection', function(socket) {
   });
 
   socket.on('profileUpdate', function (userId, message) {
-    const user = userDetails.map((user) => {if (user.shortId === userId) { return user}});
+    const user = null;
 
+    user = userDetails.forEach((socketId, user) => { if (user.shortId == userId) { return user} })
+     
     if (user){
       user.profile.push(message);
       console.log("User : " + userId + " profile's updated")
@@ -155,7 +157,8 @@ io.on('connection', function(socket) {
   })
 
   socket.on('tame', function (userId, name) {
-    const user = userDetails.map((user) => {if (user.shortId === userId) { return user}});
+    const user = null;
+    user = userDetails.forEach((socketId, user) => { if (user.shortId == userId) { return user} })
 
     if (user){
       user.surnoms.push(name);
