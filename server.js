@@ -145,19 +145,23 @@ io.on('connection', function(socket) {
   });
 
   socket.on('profileUpdate', function (userId, message) {
-    const user = userDetails.find((user) => user.shortId === userId);
+    const user = userDetails.map((user) => {if (user.shortId === userId) { return user}});
 
-    user.profile.push(message);
-
-    broadcastUserList();
+    if (user){
+      user.profile.push(message);
+      console.log("User : " + userId + " profile's updated")
+      broadcastUserList();
+    }
   })
 
   socket.on('tame', function (userId, name) {
-    const user = userDetails.find((user) => user.shortId === userId);
+    const user = userDetails.map((user) => {if (user.shortId === userId) { return user}});
 
-    user.surnoms.push(name);
-
-    broadcastUserList();
+    if (user){
+      user.surnoms.push(name);
+      console.log("User : " + userId + " has been tamed as : " + name)
+      broadcastUserList();
+    }
   })
   
   // Il se deconnecte mais reste sur la page (socket toujours présent)
