@@ -154,6 +154,9 @@ io.on('connection', function(socket) {
       console.log("User : " + userId + " profile's updated")
       broadcastUserList();
     }
+    else{
+      console.loge("Erreur lors de l'update du profil - user non trouvé")
+    }
   })
 
   socket.on('tame', function (userId, name) {
@@ -164,6 +167,9 @@ io.on('connection', function(socket) {
       user.surnoms.push(name);
       console.log("User : " + userId + " has been tamed as : " + name)
       broadcastUserList();
+    }
+    else{
+      console.loge("Erreur lors de l'ajout d'un surnom - user non trouvé")
     }
   })
   
