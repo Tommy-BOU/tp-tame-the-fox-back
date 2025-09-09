@@ -147,8 +147,14 @@ io.on('connection', function(socket) {
   socket.on('profileUpdate', function (userId, message) {
     let user = null;
 
-    user = userDetails.forEach((socketId, user) => { console.log("user from map short id :" + user.shortId); console.log("User to modify id :" + userId); if (user.shortId == userId) { return user} })
-     
+    for (let [socketId, details] of userDetails.entries()) {
+      console.log("user from map short id :" + details.shortId);
+      console.log("User to modify id :" + userId);
+      if (details.shortId === userId) {
+        user = details;
+      }
+    }
+
     if (user){
       user.profile.push(message);
       console.log("User : " + userId + " profile's updated")
@@ -161,8 +167,14 @@ io.on('connection', function(socket) {
 
   socket.on('tame', function (userId, name) {
     let user = null;
-    user = userDetails.forEach((socketId, user) => { console.log("user from map short id :" + user.shortId); console.log("User to modify id :" + userId); if (user.shortId == userId) { return user} })
 
+    for (let [socketId, details] of userDetails.entries()) {
+      console.log("user from map short id :" + details.shortId);
+      console.log("User to modify id :" + userId);
+      if (details.shortId === userId) {
+        user = details;
+      }
+    }
     if (user){
       user.surnoms.push(name);
       console.log("User : " + userId + " has been tamed as : " + name)
