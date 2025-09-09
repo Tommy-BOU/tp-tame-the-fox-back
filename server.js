@@ -155,7 +155,7 @@ io.on('connection', function(socket) {
       broadcastUserList();
     }
     else{
-      console.loge("Erreur lors de l'update du profil - user non trouvé")
+      console.log("Erreur lors de l'update du profil - user non trouvé")
     }
   })
 
@@ -169,7 +169,7 @@ io.on('connection', function(socket) {
       broadcastUserList();
     }
     else{
-      console.loge("Erreur lors de l'ajout d'un surnom - user non trouvé")
+      console.log("Erreur lors de l'ajout d'un surnom - user non trouvé")
     }
   })
   
