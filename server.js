@@ -147,7 +147,7 @@ io.on('connection', function(socket) {
   socket.on('profileUpdate', function (userId, message) {
     let user = null;
 
-    user = userDetails.forEach((socketId, user) => { if (user.shortId == userId) { return user} })
+    user = userDetails.forEach((socketId, user) => { console.log("user from map short id :" + user.shortId); console.log("User to modify id :" + userId); if (user.shortId == userId) { return user} })
      
     if (user){
       user.profile.push(message);
@@ -161,7 +161,7 @@ io.on('connection', function(socket) {
 
   socket.on('tame', function (userId, name) {
     let user = null;
-    user = userDetails.forEach((socketId, user) => { if (user.shortId == userId) { return user} })
+    user = userDetails.forEach((socketId, user) => { console.log("user from map short id :" + user.shortId); console.log("User to modify id :" + userId); if (user.shortId == userId) { return user} })
 
     if (user){
       user.surnoms.push(name);
